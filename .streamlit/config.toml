@@ -1,3 +1,11 @@
+[theme]
+base = "dark"
+primaryColor = "#ff5500"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#161b22"
+textColor = "#f0f6fc"
+font = "sans serif"
+
 [server]
 headless = true
 enableCORS = false
@@ -7,3 +15,4 @@ address = "0.0.0.0"
 
 [browser]
 gatherUsageStats = false
+

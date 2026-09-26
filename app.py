@@ -346,10 +346,48 @@ CUSTOM_CSS = """
         transform: translateY(1px) scale(0.99) !important;
     }
 
-    /* Sidebar glassmorphism */
+    /* Sidebar glassmorphism & High-Contrast Typography */
     [data-testid="stSidebar"] {
-        background-color: rgba(13, 16, 23, 0.94) !important;
-        border-right: 1px solid rgba(255, 100, 30, 0.18) !important;
+        background-color: rgba(13, 16, 23, 0.96) !important;
+        border-right: 1px solid rgba(255, 100, 30, 0.25) !important;
+    }
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] h4 {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.3px !important;
+    }
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] span {
+        color: #f0f6fc !important;
+        font-weight: 700 !important;
+        font-size: 0.92rem !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
+        color: #e6edf3 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label p,
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label span {
+        color: #f0f6fc !important;
+        font-size: 0.92rem !important;
+        font-weight: 500 !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="select"] {
+        background-color: #161b22 !important;
+        border: 1px solid rgba(255, 120, 40, 0.35) !important;
+        border-radius: 8px !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="select"] * {
+        color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(255, 100, 30, 0.25) !important;
+    }
+    header[data-testid="stHeader"] {
+        background: transparent !important;
     }
 
     /* Sleek Tabs */
@@ -375,7 +413,7 @@ CUSTOM_CSS = """
 
     /* Standby Card */
     .standby-card {
-        background: rgba(18, 22, 32, 0.84) !important;
+        background: rgba(18, 22, 32, 0.88) !important;
         backdrop-filter: blur(16px) !important;
         -webkit-backdrop-filter: blur(16px) !important;
         border: 1px solid rgba(255, 120, 40, 0.35) !important;
@@ -450,6 +488,18 @@ CUSTOM_CSS = """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
+def render_html(html_str: str, sidebar: bool = False):
+    """
+    Renders raw HTML safely in Streamlit without markdown interpreting
+    indented lines or blank lines as <pre><code> code blocks.
+    """
+    cleaned = "\n".join([line.strip() for line in html_str.splitlines() if line.strip()])
+    if sidebar:
+        st.sidebar.markdown(cleaned, unsafe_allow_html=True)
+    else:
+        st.markdown(cleaned, unsafe_allow_html=True)
+
+
 def render_coal_burning_background():
     """Renders an animated glowing coal hearth and rising ember sparks in the background."""
     np.random.seed(1312)
@@ -472,7 +522,7 @@ def render_coal_burning_background():
         {embers_html}
     </div>
     """
-    st.markdown(html, unsafe_allow_html=True)
+    render_html(html)
 
 
 render_coal_burning_background()
@@ -604,7 +654,7 @@ def preprocess_signal(raw_signal):
 # HEADER & HERO SECTION
 # ==============================================================================
 
-st.markdown("""
+render_html("""
 <div class="main-title-container">
     <div class="main-title">Ignicoal AI 🔗</div>
     <div class="main-subtitle">AI Assisted Photoacoustic Coal Analyzer</div>
@@ -618,15 +668,19 @@ st.markdown("""
     </div>
     <div class="hero-tags">• Simple sample. • Powerful insights. • Safer decisions.</div>
 </div>
-""", unsafe_allow_html=True)
+""")
 
 
 # ==============================================================================
 # SIDEBAR: FIELD TELEMETRY INGESTION
 # ==============================================================================
 
-st.sidebar.markdown("### **Field Telemetry Ingestion**")
-st.sidebar.markdown("---")
+render_html("""
+<div style="font-size: 1.15rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; margin-bottom: 0.3rem;">
+    ⚡ FIELD TELEMETRY INGESTION
+</div>
+<hr style="margin: 0.4rem 0 1rem 0; border: none; border-bottom: 1px solid rgba(255, 100, 30, 0.35);">
+""", sidebar=True)
 
 data_mode = st.sidebar.radio(
     "Data Mode",
@@ -709,7 +763,7 @@ if run_btn:
 # STANDBY WELCOME VIEW (BEFORE USER PRESSES RUN)
 # -------------------------------------------------------------
 if not st.session_state.has_run:
-    st.markdown(f"""
+    render_html(f"""
     <div class="standby-card">
         <div class="standby-pill">⚡ Telemetry Armed • Awaiting Execution</div>
         <div class="standby-heading">Ready to Analyze Specimen: <span style="color:#ff8c00;">{specimen_title}</span></div>
@@ -717,7 +771,6 @@ if not st.session_state.has_run:
             Configure your coal specimen parameters in the left telemetry sidebar, then press <strong>RUN ANALYSIS</strong> 
             to initiate photoacoustic pulse deconvolution, ultrasonic feature extraction, and multi-model susceptibility inference.
         </div>
-        
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 1.8rem 0; text-align: left;">
             <div class="standby-mini-box">
                 <div class="standby-box-icon">🔬</div>
@@ -745,7 +798,7 @@ if not st.session_state.has_run:
             </div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     c_run1, c_run2, c_run3 = st.columns([1, 2, 1])
     with c_run2:
@@ -754,36 +807,36 @@ if not st.session_state.has_run:
             st.session_state.active_specimen_token = current_specimen_token
             st.rerun()
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    render_html("<br>")
     with st.expander("🔍 Pre-Run Model Calibration & Architecture Preview", expanded=False):
         m_col1, m_col2, m_col3 = st.columns(3)
         with m_col1:
-            st.markdown("""
+            render_html("""
             <div style="background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(255, 110, 30, 0.2); border-radius: 10px; padding: 1.2rem;">
                 <h4 style="color: #58a6ff; margin-top:0;">Ash Content</h4>
                 <p><strong>Model:</strong> ExtraTreesRegressor (200 trees)</p>
                 <p><strong>Scaler:</strong> PowerTransformer (Yeo-Johnson)</p>
                 <p><strong>5-Fold CV R²:</strong> 0.9218 (±0.0118)</p>
             </div>
-            """, unsafe_allow_html=True)
+            """)
         with m_col2:
-            st.markdown("""
+            render_html("""
             <div style="background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(255, 110, 30, 0.2); border-radius: 10px; padding: 1.2rem;">
                 <h4 style="color: #3fb950; margin-top:0;">Fixed Carbon</h4>
                 <p><strong>Model:</strong> GradientBoostingRegressor (160 trees)</p>
                 <p><strong>Scaler:</strong> StandardScaler</p>
                 <p><strong>5-Fold CV R²:</strong> 0.9502 (±0.0174)</p>
             </div>
-            """, unsafe_allow_html=True)
+            """)
         with m_col3:
-            st.markdown("""
+            render_html("""
             <div style="background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(255, 110, 30, 0.2); border-radius: 10px; padding: 1.2rem;">
                 <h4 style="color: #d29922; margin-top:0;">Ignition Temp</h4>
                 <p><strong>Model:</strong> VotingRegressor (ET 65% + GB 35%)</p>
                 <p><strong>Scaler:</strong> QuantileTransformer</p>
                 <p><strong>5-Fold CV R²:</strong> 0.8883 (±0.0852)</p>
             </div>
-            """, unsafe_allow_html=True)
+            """)
 
     st.stop()
 
@@ -940,42 +993,42 @@ else:
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
-    st.markdown(f"""
+    render_html(f"""
     <div class="metric-card">
         <div class="metric-title">Predicted Susceptibility</div>
         <div class="risk-badge {badge_class}">{risk_label}</div>
         <div class="metric-sub">Confidence: {confidence:.1f}%</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 with c2:
-    st.markdown(f"""
+    render_html(f"""
     <div class="metric-card">
         <div class="metric-title">Ignition Temperature</div>
         <div class="metric-val">{pred_ign:.1f} °C</div>
         <div class="metric-sub">Crossing Point / DTGA</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 with c3:
-    st.markdown(f"""
+    render_html(f"""
     <div class="metric-card">
         <div class="metric-title">Fixed Carbon Content</div>
         <div class="metric-val">{pred_carb:.1f}%</div>
         <div class="metric-sub">Combustible Matrix</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 with c4:
-    st.markdown(f"""
+    render_html(f"""
     <div class="metric-card">
         <div class="metric-title">Ash Content</div>
         <div class="metric-val">{pred_ash:.1f}%</div>
         <div class="metric-sub">Thermal Inertia Suppressor</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-st.markdown("<br>", unsafe_allow_html=True)
+render_html("<br>")
 
 
 # ==============================================================================
@@ -1047,17 +1100,17 @@ with tab_analysis:
 
     with col_clf2:
         st.markdown('<div style="font-weight: 700; font-size: 0.95rem; color: #ffffff; margin-bottom: 0.3rem;">Actionable Mine Management Advisory</div>', unsafe_allow_html=True)
-        st.markdown(f"""
+        render_html(f"""
         <div class="advisory-box {advisory_class}">
             <div class="advisory-title">{advisory_title}</div>
             <div class="advisory-item"><strong>Incubation Window:</strong> {incubation_text}</div>
             <div class="advisory-item"><strong>Stockyard Strategy:</strong> {strategy_text}</div>
             <div class="advisory-item"><strong>Fire Mitigation Protocol:</strong> {mitigation_text}</div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
     # 2. Predicted Coal Properties & Telemetry Overview
-    st.markdown('<div class="section-title">Telemetry & Proximate Property Analysis</div>', unsafe_allow_html=True)
+    render_html('<div class="section-title">Telemetry & Proximate Property Analysis</div>')
 
     col_p1, col_p2 = st.columns([1.2, 1], gap="medium")
 
@@ -1070,7 +1123,7 @@ with tab_analysis:
         gt_carb_str = f"{gt_carb:.2f}%" if pd.notna(gt_carb) else "N/A"
         gt_ign_str = f"{gt_ign:.1f} °C" if pd.notna(gt_ign) else "N/A"
 
-        st.markdown(f"""
+        render_html(f"""
         <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2rem 1.4rem;">
             <div style="font-weight: 700; font-size: 0.95rem; color: #ffffff; margin-bottom: 0.8rem;">
                 Target Property Telemetry Summary
@@ -1101,10 +1154,10 @@ with tab_analysis:
                 </tbody>
             </table>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
     with col_p2:
-        st.markdown(f"""
+        render_html(f"""
         <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2rem 1.4rem;">
             <div style="font-weight: 700; font-size: 0.95rem; color: #ffffff; margin-bottom: 0.8rem;">
                 Proximate Matrix Balance (Estimated)
@@ -1136,7 +1189,7 @@ with tab_analysis:
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
 
 # ==============================================================================
@@ -1356,7 +1409,7 @@ with tab_models:
     m_col1, m_col2, m_col3 = st.columns(3)
 
     with m_col1:
-        st.markdown("""
+        render_html("""
         <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2rem;">
             <h4 style="color: #58a6ff; margin-top:0;">Ash Content</h4>
             <p><strong>Model:</strong> ExtraTreesRegressor (200 trees)</p>
@@ -1367,10 +1420,10 @@ with tab_models:
             <p><strong>Test RMSE:</strong> 3.3551 %</p>
             <p><strong>Test MAE:</strong> 2.1199 %</p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
     with m_col2:
-        st.markdown("""
+        render_html("""
         <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2rem;">
             <h4 style="color: #3fb950; margin-top:0;">Fixed Carbon Content</h4>
             <p><strong>Model:</strong> GradientBoostingRegressor (160 trees)</p>
@@ -1381,10 +1434,10 @@ with tab_models:
             <p><strong>Test RMSE:</strong> 4.0479 %</p>
             <p><strong>Test MAE:</strong> 2.2955 %</p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
     with m_col3:
-        st.markdown("""
+        render_html("""
         <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2rem;">
             <h4 style="color: #d29922; margin-top:0;">Ignition Temperature</h4>
             <p><strong>Model:</strong> VotingRegressor (ET 65% + GB 35%)</p>
@@ -1395,15 +1448,15 @@ with tab_models:
             <p><strong>Test RMSE:</strong> 13.2375 °C</p>
             <p><strong>Test MAE:</strong> 8.2178 °C</p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Multimodal Fusion SCS Classification Model</div>', unsafe_allow_html=True)
+    render_html("<br>")
+    render_html('<div class="section-title">Multimodal Fusion SCS Classification Model</div>')
 
     clf_col1, clf_col2 = st.columns([1.15, 1], gap="large")
 
     with clf_col1:
-        st.markdown(f"""
+        render_html(f"""
         <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.4rem;">
             <h4 style="color: #a371f7; margin-top:0;">Random Forest SCS Classifier (500 Trees)</h4>
             <p><strong>Architecture:</strong> Multimodal Acoustic Feature Fusion (Ash + Fixed Carbon + Ignition feature matrices)</p>
@@ -1431,7 +1484,7 @@ with tab_models:
                 </tbody>
             </table>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
     with clf_col2:
         cm_path = "RandomForest_confusion_matrix.png"
