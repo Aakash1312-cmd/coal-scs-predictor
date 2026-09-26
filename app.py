@@ -703,16 +703,24 @@ if data_mode == "Stockyard Database Sample":
     default_idx = coal_samples.index("C3") if "C3" in coal_samples else 0
     selected_sample = st.sidebar.selectbox("Select Coal Sample ID", coal_samples, index=default_idx)
 
-    # 2. Select Shot Instance under selected coal sample
+    # 2. Select Pellet (e.g. P1_05, P1_10, etc. without SCS class prefix)
     sample_instances = df_ash[df_ash['coal_sample'] == selected_sample]['instance_id'].tolist()
-    # Format display name (e.g. Low_C3_P1_05)
-    scs_class = df_ash[df_ash['coal_sample'] == selected_sample]['scs_class'].iloc[0]
-    display_names = [f"{scs_class}_{inst}" for inst in sample_instances]
+    pellet_options = [inst.replace(f"{selected_sample}_", "", 1) for inst in sample_instances]
+    default_pellet_idx = pellet_options.index("P1_05") if "P1_05" in pellet_options else 0
+    selected_pellet = st.sidebar.selectbox("Select Pellet", pellet_options, index=default_pellet_idx)
 
-    selected_display = st.sidebar.selectbox("Select Shot Instance", display_names, index=0)
-    selected_instance_id = sample_instances[display_names.index(selected_display)]
-    specimen_title = f"{selected_sample} ({selected_display})"
-    specimen_sub = f"Ground Truth SCS: {scs_class} • Instance: {selected_instance_id}"
+    selected_instance_id = f"{selected_sample}_{selected_pellet}"
+    current_specimen_title = f"Coal Sample: {selected_sample} and Pellet {selected_pellet}"
+
+    sidebar_specimen_info = {
+        "data_mode": "Stockyard Database Sample",
+        "sample": selected_sample,
+        "pellet": selected_pellet,
+        "instance_id": selected_instance_id,
+        "title": current_specimen_title,
+        "uploaded_file": None,
+        "chosen_col": None
+    }
 
 else:
     # Mode 2: Upload Custom Sensor Data
@@ -733,79 +741,80 @@ else:
                 signal_cols = df_custom.columns.tolist()
 
             chosen_col = st.sidebar.selectbox("Select Signal Channel", signal_cols)
-            specimen_title = f"{uploaded_file.name}"
-            specimen_sub = f"Channel: {chosen_col} ({len(df_custom)} data points)"
+            selected_instance_id = f"Custom_{chosen_col}"
+            current_specimen_title = f"Coal Sample: {uploaded_file.name} and Pellet {chosen_col}"
+
+            sidebar_specimen_info = {
+                "data_mode": "Upload Custom Sensor Data (.csv/.xlsx)",
+                "sample": uploaded_file.name,
+                "pellet": chosen_col,
+                "instance_id": selected_instance_id,
+                "title": current_specimen_title,
+                "uploaded_file": uploaded_file,
+                "chosen_col": chosen_col,
+                "df_custom": df_custom,
+                "time_col": time_col
+            }
         except Exception as e:
             st.sidebar.error(f"Error parsing file: {e}")
-            specimen_title = "Uploaded File Error"
-            specimen_sub = str(e)
+            current_specimen_title = "Uploaded File Error"
+            sidebar_specimen_info = {
+                "data_mode": "Upload Custom Sensor Data (.csv/.xlsx)",
+                "sample": "Error",
+                "pellet": "Error",
+                "instance_id": None,
+                "title": current_specimen_title,
+                "uploaded_file": None,
+                "chosen_col": None
+            }
     else:
         st.sidebar.info("Upload your sensor file above to begin analysis.")
-        specimen_title = "Awaiting Telemetry File Upload"
-        specimen_sub = "Please upload a CSV or Excel signal file"
+        current_specimen_title = "Awaiting Telemetry File Upload"
+        sidebar_specimen_info = {
+            "data_mode": "Upload Custom Sensor Data (.csv/.xlsx)",
+            "sample": "Awaiting Upload",
+            "pellet": "None",
+            "instance_id": None,
+            "title": current_specimen_title,
+            "uploaded_file": None,
+            "chosen_col": None
+        }
 
 # -------------------------------------------------------------
-# RUN BUTTON & INFERENCE TRIGGER
+# SINGLE RUN BUTTON & PERSISTENT SESSION STATE
 # -------------------------------------------------------------
 st.sidebar.markdown("<br>", unsafe_allow_html=True)
 run_btn = st.sidebar.button("🔥 RUN ANALYSIS", type="primary", width="stretch")
 
 if "has_run" not in st.session_state:
     st.session_state.has_run = False
-
-current_specimen_token = f"{data_mode}_{selected_instance_id}" if data_mode == "Stockyard Database Sample" else f"{data_mode}_{(uploaded_file.name if uploaded_file is not None else 'no_file')}_{(chosen_col if 'chosen_col' in locals() else '')}"
+    st.session_state.active_specimen = None
 
 if run_btn:
     st.session_state.has_run = True
-    st.session_state.active_specimen_token = current_specimen_token
+    st.session_state.active_specimen = sidebar_specimen_info
 
 # -------------------------------------------------------------
-# STANDBY WELCOME VIEW (BEFORE USER PRESSES RUN)
+# STANDBY WELCOME VIEW (BEFORE USER EVER PRESSES RUN)
 # -------------------------------------------------------------
 if not st.session_state.has_run:
+    if data_mode == "Stockyard Database Sample":
+        heading_markup = f'Coal Sample: <span style="color:#ff8c00;">{selected_sample}</span> and Pellet <span style="color:#ff8c00;">{selected_pellet}</span>'
+    elif uploaded_file is not None and "chosen_col" in locals():
+        heading_markup = f'Coal Sample: <span style="color:#ff8c00;">{uploaded_file.name}</span> and Pellet <span style="color:#ff8c00;">{chosen_col}</span>'
+    else:
+        heading_markup = '<span style="color:#ff8c00;">Awaiting Telemetry File Upload</span>'
+
     render_html(f"""
     <div class="standby-card">
         <div class="standby-pill">⚡ Telemetry Armed • Awaiting Execution</div>
-        <div class="standby-heading">Ready to Analyze Specimen: <span style="color:#ff8c00;">{specimen_title}</span></div>
+        <div class="standby-heading">{heading_markup}</div>
         <div class="standby-subtext">
             Configure your coal specimen parameters in the left telemetry sidebar, then press <strong>RUN ANALYSIS</strong> 
             to initiate photoacoustic pulse deconvolution, ultrasonic feature extraction, and multi-model susceptibility inference.
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 1.8rem 0; text-align: left;">
-            <div class="standby-mini-box">
-                <div class="standby-box-icon">🔬</div>
-                <div class="standby-box-title">Selected Specimen</div>
-                <div class="standby-box-val">{selected_sample if data_mode == 'Stockyard Database Sample' else 'Custom File'}</div>
-                <div class="standby-box-sub">{specimen_sub}</div>
-            </div>
-            <div class="standby-mini-box">
-                <div class="standby-box-icon">📡</div>
-                <div class="standby-box-title">Laser Telemetry</div>
-                <div class="standby-box-val">532 nm Nd:YAG</div>
-                <div class="standby-box-sub">50 MS/s Fast Sampling</div>
-            </div>
-            <div class="standby-mini-box">
-                <div class="standby-box-icon">🌲</div>
-                <div class="standby-box-title">Random Forest SCS</div>
-                <div class="standby-box-val">500 Estimators</div>
-                <div class="standby-box-sub">97.22% Test Accuracy</div>
-            </div>
-            <div class="standby-mini-box">
-                <div class="standby-box-icon">🎯</div>
-                <div class="standby-box-title">Regression Ensemble</div>
-                <div class="standby-box-val">ET + GB + Voting</div>
-                <div class="standby-box-sub">R² > 0.90 Calibrated</div>
-            </div>
-        </div>
     </div>
     """)
-
-    c_run1, c_run2, c_run3 = st.columns([1, 2, 1])
-    with c_run2:
-        if st.button("🔥 RUN FULL PREDICTION PIPELINE", type="primary", width="stretch", key="central_run_btn"):
-            st.session_state.has_run = True
-            st.session_state.active_specimen_token = current_specimen_token
-            st.rerun()
 
     render_html("<br>")
     with st.expander("🔍 Pre-Run Model Calibration & Architecture Preview", expanded=False):
@@ -841,21 +850,33 @@ if not st.session_state.has_run:
     st.stop()
 
 # -------------------------------------------------------------
-# POST-RUN INFERENCE EXECUTION
+# POST-RUN INFERENCE EXECUTION (PRESERVES PREVIOUS SPECIMEN UNTIL RUN)
 # -------------------------------------------------------------
-if st.session_state.get("active_specimen_token") != current_specimen_token:
-    st.sidebar.warning("⚠️ Specimen selection changed. Click **RUN ANALYSIS** to update.")
+active_spec = st.session_state.active_specimen
+if active_spec is None:
+    active_spec = sidebar_specimen_info
+    st.session_state.active_specimen = active_spec
 
-st.sidebar.success(f"✅ Active Analysis: {specimen_title}")
-if st.sidebar.button("🔄 Reset / Clear Results", width="stretch"):
-    st.session_state.has_run = False
-    st.rerun()
+active_data_mode = active_spec.get("data_mode", "Stockyard Database Sample")
+active_sample = active_spec.get("sample", "C3")
+active_pellet = active_spec.get("pellet", "P1_05")
+active_instance_id = active_spec.get("instance_id", "C3_P1_05")
+active_title = active_spec.get("title", f"Coal Sample: {active_sample} and Pellet {active_pellet}")
 
-if data_mode == "Stockyard Database Sample":
+current_selection_id = sidebar_specimen_info.get("instance_id")
+if current_selection_id != active_instance_id:
+    st.sidebar.info(
+        f"📊 Currently showing: **{active_title}**\n\n"
+        f"👉 Click **🔥 RUN ANALYSIS** to analyze newly selected: **{sidebar_specimen_info.get('title')}**."
+    )
+else:
+    st.sidebar.success(f"✅ Active Analysis: **{active_title}**")
+
+if active_data_mode == "Stockyard Database Sample":
     # Fetch corresponding row from feature tables
-    row_ash = df_ash[df_ash['instance_id'] == selected_instance_id].iloc[0]
-    row_carb = df_carb[df_carb['instance_id'] == selected_instance_id].iloc[0]
-    row_ign = df_ign[df_ign['instance_id'] == selected_instance_id].iloc[0]
+    row_ash = df_ash[df_ash['instance_id'] == active_instance_id].iloc[0]
+    row_carb = df_carb[df_carb['instance_id'] == active_instance_id].iloc[0]
+    row_ign = df_ign[df_ign['instance_id'] == active_instance_id].iloc[0]
 
     # Predict properties using trained models
     x_ash = row_ash[ash_bundle['feature_names']].values.reshape(1, -1)
@@ -867,7 +888,7 @@ if data_mode == "Stockyard Database Sample":
     pred_ign = float(ign_bundle['model'].predict(ign_bundle['scaler'].transform(ign_bundle['imputer'].transform(x_ign)))[0])
 
     # Multimodal SCS Classification Prediction
-    row_merged = df_merged[df_merged['instance_id'] == selected_instance_id]
+    row_merged = df_merged[df_merged['instance_id'] == active_instance_id]
     if not row_merged.empty:
         clf_feats = clf_bundle['feature_names']
         sample_clf_df = row_merged[clf_feats]
@@ -891,19 +912,22 @@ if data_mode == "Stockyard Database Sample":
             prob_low, prob_med, prob_high = 9.8, 19.6, 70.6
         confidence = [prob_low, prob_med, prob_high][pred_class_idx]
 
-    raw_time_series, raw_signal_series = load_raw_signal(selected_instance_id)
+    raw_time_series, raw_signal_series = load_raw_signal(active_instance_id)
 
 else:
     # Mode 2: Upload Custom Sensor Data
-    if uploaded_file is not None:
+    active_df = active_spec.get('df_custom')
+    active_time_col = active_spec.get('time_col')
+    active_chosen_col = active_spec.get('chosen_col')
+    if active_df is not None and active_chosen_col in active_df.columns:
         try:
-            if time_col:
-                raw_time_series = df_custom[time_col].dropna().values
+            if active_time_col:
+                raw_time_series = active_df[active_time_col].dropna().values
             else:
-                raw_time_series = np.arange(len(df_custom)) * DT
+                raw_time_series = np.arange(len(active_df)) * DT
 
-            raw_signal_series = df_custom[chosen_col].dropna().values
-            selected_instance_id = f"Custom_{chosen_col}"
+            raw_signal_series = active_df[active_chosen_col].dropna().values
+            active_instance_id = f"Custom_{active_chosen_col}"
             scs_class = "Unknown"
 
             # Predict based on average features or closest proxy
@@ -938,6 +962,9 @@ else:
 
         except Exception as e:
             st.sidebar.error(f"Error parsing file: {e}")
+            row_ash = df_ash.iloc[0]
+            row_carb = df_carb.iloc[0]
+            row_ign = df_ign.iloc[0]
             pred_ash, pred_carb, pred_ign = 31.2, 29.1, 411.9
             pred_class_idx = 0
             confidence = 94.0
@@ -987,8 +1014,23 @@ else:
 
 
 # ==============================================================================
-# TOP 4 METRIC CARDS
+# TOP 4 METRIC CARDS & ACTIVE SPECIMEN BANNER
 # ==============================================================================
+
+render_html(f"""
+<div style="display: flex; align-items: center; justify-content: space-between; background: rgba(18, 22, 32, 0.75); border: 1px solid rgba(255, 110, 30, 0.28); border-radius: 12px; padding: 0.9rem 1.4rem; margin-bottom: 1.4rem;">
+    <div style="font-weight: 700; font-size: 1.05rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #ff8c00; font-size: 1.2rem;">🔬</span> 
+        <span>Target Specimen:</span> 
+        <span style="color: #ff8c00;">Coal Sample: {active_sample}</span>
+        <span style="color: #6e7681;">&bull;</span>
+        <span style="color: #ff8c00;">Pellet {active_pellet}</span>
+    </div>
+    <div style="font-size: 0.82rem; font-weight: 600; color: #3fb950; background: rgba(63, 185, 80, 0.15); border: 1px solid rgba(63, 185, 80, 0.35); padding: 4px 12px; border-radius: 9999px;">
+        ● Multi-Model Inference Executed
+    </div>
+</div>
+""")
 
 c1, c2, c3, c4 = st.columns(4)
 
