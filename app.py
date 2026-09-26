@@ -39,85 +39,165 @@ st.set_page_config(
 
 CUSTOM_CSS = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Main background & container */
+    /* Main background with atmospheric coal dark hearth */
     .stApp {
-        background-color: #0d1117;
+        background: radial-gradient(circle at 50% 100%, #1c0f08 0%, #0e1117 50%, #07090d 100%) !important;
         color: #f0f6fc;
+        min-height: 100vh;
+    }
+
+    /* Coal Burning Hearth Bottom Glow */
+    @keyframes hearthBreathe {
+        0%, 100% {
+            opacity: 0.65;
+            transform: scaleY(1);
+            filter: blur(45px);
+        }
+        50% {
+            opacity: 0.95;
+            transform: scaleY(1.2);
+            filter: blur(65px);
+        }
+    }
+
+    /* Floating Embers Rising from Burning Coal */
+    @keyframes emberRise {
+        0% {
+            transform: translateY(105vh) translateX(0) scale(0.5);
+            opacity: 0;
+        }
+        12% {
+            opacity: var(--op);
+        }
+        80% {
+            opacity: calc(var(--op) * 0.85);
+        }
+        100% {
+            transform: translateY(-8vh) translateX(var(--drift)) scale(1.2);
+            opacity: 0;
+        }
+    }
+
+    .coal-hearth-glow {
+        position: fixed;
+        bottom: -70px;
+        left: 0;
+        width: 100vw;
+        height: 250px;
+        background: radial-gradient(ellipse at 50% 100%, rgba(255, 69, 0, 0.45) 0%, rgba(230, 45, 0, 0.25) 35%, rgba(140, 20, 0, 0.12) 65%, transparent 80%);
+        pointer-events: none;
+        z-index: 0;
+        animation: hearthBreathe 4.8s ease-in-out infinite;
+    }
+
+    .coal-ember-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+    }
+
+    .coal-ember {
+        position: absolute;
+        bottom: 0;
+        border-radius: 50%;
+        background: radial-gradient(circle, #fff7dc 10%, #ff8c00 50%, #ff2600 95%);
+        box-shadow: 0 0 7px #ff6600, 0 0 15px #ff2a00;
+        animation: emberRise var(--dur) linear infinite;
+        animation-delay: var(--del);
     }
 
     /* Top title styling */
     .main-title-container {
         text-align: center;
         padding: 0.5rem 0 1.5rem 0;
+        position: relative;
+        z-index: 1;
     }
     .main-title {
-        font-size: 2.5rem;
+        font-size: 2.6rem;
         font-weight: 800;
         letter-spacing: -0.5px;
-        color: #ffffff;
+        background: linear-gradient(135deg, #ffffff 40%, #ff8c00 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin-bottom: 0.2rem;
     }
     .main-subtitle {
         font-size: 0.85rem;
-        font-weight: 600;
-        letter-spacing: 2.5px;
-        color: #8b949e;
+        font-weight: 700;
+        letter-spacing: 3px;
+        color: #ffa066;
         text-transform: uppercase;
     }
 
     /* Hero Banner Card */
     .hero-card {
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 1.5rem 2rem;
+        background: rgba(18, 22, 32, 0.82) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 110, 30, 0.25) !important;
+        border-radius: 14px;
+        padding: 1.6rem 2rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(255, 69, 0, 0.08) !important;
+        position: relative;
+        z-index: 1;
     }
     .hero-heading {
-        font-size: 1.4rem;
-        font-weight: 700;
+        font-size: 1.45rem;
+        font-weight: 800;
         color: #ffffff;
         margin-bottom: 0.6rem;
     }
     .hero-text {
         font-size: 0.95rem;
         color: #c9d1d9;
-        line-height: 1.5;
+        line-height: 1.55;
         margin-bottom: 0.8rem;
     }
     .hero-text strong {
-        color: #58a6ff;
+        color: #ff9d5c;
     }
     .hero-tags {
         font-size: 0.9rem;
         font-weight: 600;
-        color: #8b949e;
+        color: #ffa066;
     }
 
     /* Metric Cards Grid */
     .metric-card {
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 10px;
-        padding: 1.2rem 1.4rem;
+        background: rgba(18, 22, 32, 0.8) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 110, 30, 0.22) !important;
+        border-radius: 12px;
+        padding: 1.3rem 1.4rem;
         text-align: center;
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        transition: transform 0.2s ease, border-color 0.2s ease;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+        position: relative;
+        z-index: 1;
     }
     .metric-card:hover {
-        transform: translateY(-2px);
-        border-color: #58a6ff;
+        transform: translateY(-3px) !important;
+        border-color: rgba(255, 120, 40, 0.6) !important;
+        box-shadow: 0 12px 32px rgba(255, 69, 0, 0.22) !important;
     }
     .metric-title {
         font-size: 0.78rem;
@@ -133,6 +213,7 @@ CUSTOM_CSS = """
         color: #ffffff;
         margin-bottom: 0.3rem;
         line-height: 1.1;
+        font-family: 'JetBrains Mono', monospace;
     }
     .metric-sub {
         font-size: 0.78rem;
@@ -150,39 +231,43 @@ CUSTOM_CSS = """
         margin-bottom: 0.3rem;
     }
     .badge-low {
-        background: rgba(35, 134, 54, 0.2);
+        background: rgba(35, 134, 54, 0.25);
         color: #3fb950;
         border: 1px solid #238636;
+        box-shadow: 0 0 12px rgba(63, 185, 80, 0.3);
     }
     .badge-mod {
-        background: rgba(210, 153, 34, 0.2);
+        background: rgba(210, 153, 34, 0.25);
         color: #d29922;
         border: 1px solid #9e6a03;
+        box-shadow: 0 0 12px rgba(210, 153, 34, 0.3);
     }
     .badge-high {
-        background: rgba(248, 81, 73, 0.2);
+        background: rgba(248, 81, 73, 0.25);
         color: #f85149;
         border: 1px solid #da3633;
+        box-shadow: 0 0 15px rgba(248, 81, 73, 0.4);
     }
 
     /* Advisory Box */
     .advisory-box {
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 1.2rem 1.5rem;
         margin-top: 0.5rem;
         border: 1px solid;
+        backdrop-filter: blur(14px);
     }
     .advisory-low {
-        background: rgba(35, 134, 54, 0.1);
-        border-color: rgba(35, 134, 54, 0.4);
+        background: rgba(35, 134, 54, 0.12);
+        border-color: rgba(35, 134, 54, 0.45);
     }
     .advisory-mod {
-        background: rgba(210, 153, 34, 0.1);
-        border-color: rgba(210, 153, 34, 0.4);
+        background: rgba(210, 153, 34, 0.12);
+        border-color: rgba(210, 153, 34, 0.45);
     }
     .advisory-high {
-        background: rgba(248, 81, 73, 0.1);
-        border-color: rgba(248, 81, 73, 0.4);
+        background: rgba(248, 81, 73, 0.15);
+        border-color: rgba(248, 81, 73, 0.5);
     }
 
     .advisory-title {
@@ -210,6 +295,8 @@ CUSTOM_CSS = """
         font-weight: 700;
         color: #ffffff;
         margin: 1.5rem 0 0.8rem 0;
+        position: relative;
+        z-index: 1;
     }
 
     /* Custom Tables */
@@ -233,11 +320,162 @@ CUSTOM_CSS = """
         color: #c9d1d9;
     }
     .feature-table tr:hover {
-        background-color: #161b22;
+        background-color: #1c222c;
+    }
+
+    /* Fiery Burning Button */
+    div.stButton > button[kind="primary"],
+    div.stButton > button {
+        background: linear-gradient(135deg, #ff4500 0%, #ff7b00 50%, #d82600 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 190, 120, 0.45) !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        font-size: 1.05rem !important;
+        letter-spacing: 0.5px !important;
+        padding: 0.7rem 1.5rem !important;
+        box-shadow: 0 4px 18px rgba(255, 69, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    div.stButton > button:hover {
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 28px rgba(255, 85, 0, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+        border-color: #ffa855 !important;
+    }
+    div.stButton > button:active {
+        transform: translateY(1px) scale(0.99) !important;
+    }
+
+    /* Sidebar glassmorphism */
+    [data-testid="stSidebar"] {
+        background-color: rgba(13, 16, 23, 0.94) !important;
+        border-right: 1px solid rgba(255, 100, 30, 0.18) !important;
+    }
+
+    /* Sleek Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: rgba(18, 22, 32, 0.7);
+        border-radius: 12px;
+        padding: 6px;
+        gap: 8px;
+        border: 1px solid rgba(255, 110, 30, 0.2);
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        color: #8b949e;
+        font-weight: 600;
+        padding: 10px 20px;
+        transition: all 0.2s ease;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(255, 69, 0, 0.28) 0%, rgba(255, 120, 0, 0.18) 100%) !important;
+        color: #ff9d5c !important;
+        border: 1px solid rgba(255, 110, 30, 0.45) !important;
+    }
+
+    /* Standby Card */
+    .standby-card {
+        background: rgba(18, 22, 32, 0.84) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 120, 40, 0.35) !important;
+        border-radius: 16px !important;
+        padding: 2.2rem 2.5rem !important;
+        margin-bottom: 2rem !important;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 69, 0, 0.12) !important;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+    .standby-pill {
+        display: inline-block;
+        background: rgba(255, 69, 0, 0.18);
+        color: #ff7b2b;
+        border: 1px solid rgba(255, 100, 30, 0.45);
+        padding: 5px 16px;
+        border-radius: 9999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 1.2rem;
+    }
+    .standby-heading {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin-bottom: 0.8rem;
+    }
+    .standby-subtext {
+        font-size: 0.98rem;
+        color: #c9d1d9;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .standby-mini-box {
+        background: rgba(26, 32, 46, 0.7);
+        border: 1px solid rgba(255, 120, 40, 0.22);
+        border-radius: 10px;
+        padding: 1.1rem 1.2rem;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .standby-mini-box:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 120, 40, 0.55);
+    }
+    .standby-box-icon {
+        font-size: 1.4rem;
+        margin-bottom: 0.4rem;
+    }
+    .standby-box-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #8b949e;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .standby-box-val {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0.2rem 0;
+    }
+    .standby-box-sub {
+        font-size: 0.75rem;
+        color: #ff8c00;
     }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+
+def render_coal_burning_background():
+    """Renders an animated glowing coal hearth and rising ember sparks in the background."""
+    np.random.seed(1312)
+    embers = []
+    for _ in range(32):
+        left = np.random.uniform(1.0, 99.0)
+        size = np.random.uniform(2.5, 6.5)
+        dur = np.random.uniform(7.5, 17.0)
+        del_val = np.random.uniform(0.0, 14.0)
+        drift = np.random.uniform(-45.0, 45.0)
+        op = np.random.uniform(0.65, 0.95)
+        embers.append(
+            f'<div class="coal-ember" style="left:{left:.1f}%; width:{size:.1f}px; height:{size:.1f}px; '
+            f'--drift:{drift:.1f}px; --dur:{dur:.1f}s; --del:{del_val:.1f}s; --op:{op:.2f};"></div>'
+        )
+    embers_html = "".join(embers)
+    html = f"""
+    <div class="coal-hearth-glow"></div>
+    <div class="coal-ember-container">
+        {embers_html}
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+
+
+render_coal_burning_background()
 
 
 # ==============================================================================
@@ -419,7 +657,148 @@ if data_mode == "Stockyard Database Sample":
 
     selected_display = st.sidebar.selectbox("Select Shot Instance", display_names, index=0)
     selected_instance_id = sample_instances[display_names.index(selected_display)]
+    specimen_title = f"{selected_sample} ({selected_display})"
+    specimen_sub = f"Ground Truth SCS: {scs_class} • Instance: {selected_instance_id}"
 
+else:
+    # Mode 2: Upload Custom Sensor Data
+    uploaded_file = st.sidebar.file_uploader("Upload Coal Telemetry (.csv / .xlsx)", type=["csv", "xlsx"])
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                df_custom = pd.read_csv(uploaded_file)
+            else:
+                df_custom = pd.read_excel(uploaded_file)
+
+            time_cols = [c for c in df_custom.columns if "time" in c.lower()]
+            if time_cols:
+                time_col = time_cols[0]
+                signal_cols = [c for c in df_custom.columns if c != time_col]
+            else:
+                time_col = None
+                signal_cols = df_custom.columns.tolist()
+
+            chosen_col = st.sidebar.selectbox("Select Signal Channel", signal_cols)
+            specimen_title = f"{uploaded_file.name}"
+            specimen_sub = f"Channel: {chosen_col} ({len(df_custom)} data points)"
+        except Exception as e:
+            st.sidebar.error(f"Error parsing file: {e}")
+            specimen_title = "Uploaded File Error"
+            specimen_sub = str(e)
+    else:
+        st.sidebar.info("Upload your sensor file above to begin analysis.")
+        specimen_title = "Awaiting Telemetry File Upload"
+        specimen_sub = "Please upload a CSV or Excel signal file"
+
+# -------------------------------------------------------------
+# RUN BUTTON & INFERENCE TRIGGER
+# -------------------------------------------------------------
+st.sidebar.markdown("<br>", unsafe_allow_html=True)
+run_btn = st.sidebar.button("🔥 RUN ANALYSIS", type="primary", width="stretch")
+
+if "has_run" not in st.session_state:
+    st.session_state.has_run = False
+
+current_specimen_token = f"{data_mode}_{selected_instance_id}" if data_mode == "Stockyard Database Sample" else f"{data_mode}_{(uploaded_file.name if uploaded_file is not None else 'no_file')}_{(chosen_col if 'chosen_col' in locals() else '')}"
+
+if run_btn:
+    st.session_state.has_run = True
+    st.session_state.active_specimen_token = current_specimen_token
+
+# -------------------------------------------------------------
+# STANDBY WELCOME VIEW (BEFORE USER PRESSES RUN)
+# -------------------------------------------------------------
+if not st.session_state.has_run:
+    st.markdown(f"""
+    <div class="standby-card">
+        <div class="standby-pill">⚡ Telemetry Armed • Awaiting Execution</div>
+        <div class="standby-heading">Ready to Analyze Specimen: <span style="color:#ff8c00;">{specimen_title}</span></div>
+        <div class="standby-subtext">
+            Configure your coal specimen parameters in the left telemetry sidebar, then press <strong>RUN ANALYSIS</strong> 
+            to initiate photoacoustic pulse deconvolution, ultrasonic feature extraction, and multi-model susceptibility inference.
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 1.8rem 0; text-align: left;">
+            <div class="standby-mini-box">
+                <div class="standby-box-icon">🔬</div>
+                <div class="standby-box-title">Selected Specimen</div>
+                <div class="standby-box-val">{selected_sample if data_mode == 'Stockyard Database Sample' else 'Custom File'}</div>
+                <div class="standby-box-sub">{specimen_sub}</div>
+            </div>
+            <div class="standby-mini-box">
+                <div class="standby-box-icon">📡</div>
+                <div class="standby-box-title">Laser Telemetry</div>
+                <div class="standby-box-val">532 nm Nd:YAG</div>
+                <div class="standby-box-sub">50 MS/s Fast Sampling</div>
+            </div>
+            <div class="standby-mini-box">
+                <div class="standby-box-icon">🌲</div>
+                <div class="standby-box-title">Random Forest SCS</div>
+                <div class="standby-box-val">500 Estimators</div>
+                <div class="standby-box-sub">97.22% Test Accuracy</div>
+            </div>
+            <div class="standby-mini-box">
+                <div class="standby-box-icon">🎯</div>
+                <div class="standby-box-title">Regression Ensemble</div>
+                <div class="standby-box-val">ET + GB + Voting</div>
+                <div class="standby-box-sub">R² > 0.90 Calibrated</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c_run1, c_run2, c_run3 = st.columns([1, 2, 1])
+    with c_run2:
+        if st.button("🔥 RUN FULL PREDICTION PIPELINE", type="primary", width="stretch", key="central_run_btn"):
+            st.session_state.has_run = True
+            st.session_state.active_specimen_token = current_specimen_token
+            st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander("🔍 Pre-Run Model Calibration & Architecture Preview", expanded=False):
+        m_col1, m_col2, m_col3 = st.columns(3)
+        with m_col1:
+            st.markdown("""
+            <div style="background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(255, 110, 30, 0.2); border-radius: 10px; padding: 1.2rem;">
+                <h4 style="color: #58a6ff; margin-top:0;">Ash Content</h4>
+                <p><strong>Model:</strong> ExtraTreesRegressor (200 trees)</p>
+                <p><strong>Scaler:</strong> PowerTransformer (Yeo-Johnson)</p>
+                <p><strong>5-Fold CV R²:</strong> 0.9218 (±0.0118)</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with m_col2:
+            st.markdown("""
+            <div style="background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(255, 110, 30, 0.2); border-radius: 10px; padding: 1.2rem;">
+                <h4 style="color: #3fb950; margin-top:0;">Fixed Carbon</h4>
+                <p><strong>Model:</strong> GradientBoostingRegressor (160 trees)</p>
+                <p><strong>Scaler:</strong> StandardScaler</p>
+                <p><strong>5-Fold CV R²:</strong> 0.9502 (±0.0174)</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with m_col3:
+            st.markdown("""
+            <div style="background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(255, 110, 30, 0.2); border-radius: 10px; padding: 1.2rem;">
+                <h4 style="color: #d29922; margin-top:0;">Ignition Temp</h4>
+                <p><strong>Model:</strong> VotingRegressor (ET 65% + GB 35%)</p>
+                <p><strong>Scaler:</strong> QuantileTransformer</p>
+                <p><strong>5-Fold CV R²:</strong> 0.8883 (±0.0852)</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.stop()
+
+# -------------------------------------------------------------
+# POST-RUN INFERENCE EXECUTION
+# -------------------------------------------------------------
+if st.session_state.get("active_specimen_token") != current_specimen_token:
+    st.sidebar.warning("⚠️ Specimen selection changed. Click **RUN ANALYSIS** to update.")
+
+st.sidebar.success(f"✅ Active Analysis: {specimen_title}")
+if st.sidebar.button("🔄 Reset / Clear Results", width="stretch"):
+    st.session_state.has_run = False
+    st.rerun()
+
+if data_mode == "Stockyard Database Sample":
     # Fetch corresponding row from feature tables
     row_ash = df_ash[df_ash['instance_id'] == selected_instance_id].iloc[0]
     row_carb = df_carb[df_carb['instance_id'] == selected_instance_id].iloc[0]
@@ -463,24 +842,8 @@ if data_mode == "Stockyard Database Sample":
 
 else:
     # Mode 2: Upload Custom Sensor Data
-    uploaded_file = st.sidebar.file_uploader("Upload Coal Telemetry (.csv / .xlsx)", type=["csv", "xlsx"])
     if uploaded_file is not None:
         try:
-            if uploaded_file.name.endswith(".csv"):
-                df_custom = pd.read_csv(uploaded_file)
-            else:
-                df_custom = pd.read_excel(uploaded_file)
-
-            time_cols = [c for c in df_custom.columns if "time" in c.lower()]
-            if time_cols:
-                time_col = time_cols[0]
-                signal_cols = [c for c in df_custom.columns if c != time_col]
-            else:
-                time_col = None
-                signal_cols = df_custom.columns.tolist()
-
-            chosen_col = st.sidebar.selectbox("Select Signal Channel", signal_cols)
-
             if time_col:
                 raw_time_series = df_custom[time_col].dropna().values
             else:
@@ -663,8 +1026,8 @@ with tab_analysis:
         ))
 
         fig_conf.update_layout(
-            paper_bgcolor="#161b22",
-            plot_bgcolor="#161b22",
+            paper_bgcolor="rgba(18, 22, 32, 0.75)",
+            plot_bgcolor="rgba(18, 22, 32, 0.75)",
             height=250,
             margin=dict(l=30, r=20, t=25, b=30),
             yaxis=dict(
@@ -891,8 +1254,8 @@ with tab_signal:
     )
 
     fig_signals.update_layout(
-        paper_bgcolor="#161b22",
-        plot_bgcolor="#161b22",
+        paper_bgcolor="rgba(18, 22, 32, 0.75)",
+        plot_bgcolor="rgba(18, 22, 32, 0.75)",
         height=520,
         margin=dict(l=60, r=40, t=40, b=50),
         legend=dict(
